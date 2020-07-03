@@ -79,8 +79,9 @@ for i, m in enumerate(mbs):
 
 # This url worked the other day but is now gone
 our_url = 'https://raw.githubusercontent.com/mail-my-ballot/elections-officials/master/public/michigan.json'
-
 offs = requests.get(our_url).json()
+offs = json.load(open('michigan.json'))
+
 fip2clerks = {}
 for o in offs:
   fip2clerks[o['fipscode']] = fip2clerks.setdefault(o['fipscode'], [])+[o]
@@ -88,11 +89,6 @@ for o in offs:
 for m in mbs:
   try: m['our_clerks'] = fip2clerks[m['fipscode']]
   except: print('error')
-
-# Save out results
-for mb in mbs:
-  open('mi_misses.json', 'a').write(json.dumps(mb)+'\n')
-
 
 # Compare
 def comp2clerks(gt_clerk, our_clerks):
@@ -112,7 +108,14 @@ error_rate = len(misses)*1.0/len(to_compare)
 print('Error rate:', error_rate*100, '%')
 
 for mb in misses:
-  open('misses.json', 'a').write(json.dumps(mb)+'\n')
+  open('mi_misses.json', 'a').write(json.dumps(mb)+'\n')
+
+wrong_county = [m for m in misses if m['clerk']['county'] != m['our_clerks'][0]['county']]
+print('Num w wrong county:', len(wrong_county))
+
+wrong_clerk = [m for m in misses if m not in wrong_county]
+print('Num w right county but wrong clerk:', len(wrong_clerk))
+
 
 for mb in misses[:5]:
   print(10*'*')
@@ -120,5 +123,7 @@ for mb in misses[:5]:
   print(mb['clerk'])
   print(mb['our_clerks'])
   print('\n\n')
+
+
 
 
